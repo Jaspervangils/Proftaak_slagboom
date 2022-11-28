@@ -1,0 +1,5 @@
+# Database credentials
+database:
+  user: "Jasper"
+  pass: "p23hzbdjdsYm"
+#  serv: "capitaselectadb.mysql.database.azure.com:3306"
