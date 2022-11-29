@@ -2,9 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"io/ioutil"
-
 	"fmt"
+	"io/ioutil"
 
 	_ "github.com/go-sql-driver/mysql"
 	"gopkg.in/yaml.v2"
@@ -16,15 +15,18 @@ var (
 )
 
 type Config struct {
+	Host     string `yaml:"host"`
 	Database struct {
 		Username string `yaml:"user"`
 		Password string `yaml:"pass"`
-		server   string `yaml:"serv"`
 	} `yaml:"database"`
 }
 
+type result struct {
+	KentekenResult string
+}
+
 func main() {
-	//fmt.Println(kentekenGen())
 	databaseFunc()
 }
 
@@ -34,23 +36,32 @@ func databaseFunc() {
 	if err != nil {
 		panic(err)
 	}
-	var ConfigStruct Config
+	var configStruct Config
 
-	err = yaml.Unmarshal(file, &ConfigStruct)
+	err = yaml.Unmarshal(file, &configStruct)
 	if err != nil {
 		panic(err)
 	}
 
-	db, err := sql.Open("mysql", ConfigStruct.Database.Username+":"+ConfigStruct.Database.Password+"@tcp(capitaselectadb.mysql.database.azure.com:3306)/csdb?tls=true")
+	db, err := sql.Open("mysql", configStruct.Database.Username+":"+configStruct.Database.Password+"@tcp("+configStruct.Host+")/csdb?tls=true")
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer db.Close()
-	rows, err := db.Query("INSERT INTO `csdb`.`kenteken` (`KentekenID`) VALUES ('testets')") // select + from db
+	rows, err := db.Query("SELECT * FROM `csdb`.`kenteken` ORDER BY `KentekenID`")
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer rows.Close()
+
+	for rows.Next() {
+		var result result
+		err := rows.Scan(&result.KentekenResult)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(result.KentekenResult[1])
+	}
 }
 
 // func kentekenGen() string {
