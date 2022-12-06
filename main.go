@@ -4,17 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
-
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
 	"gopkg.in/yaml.v2"
-)
-
-var (
-	ceifers string = "0123456789"
-	letters string = "DFGHJKLNPRSTXYZ"
 )
 
 type Config struct {
@@ -31,12 +25,10 @@ type Result struct {
 
 func main() {
 	input()
-	//databaseFunc()
 }
 
 func databaseFunc(p string) string {
-	var re string
-	file, err := ioutil.ReadFile("config.yaml")
+	file, err := ioutil.ReadFile("config.yaml") // laad configuratie bestand
 
 	if err != nil {
 		panic(err)
@@ -47,35 +39,35 @@ func databaseFunc(p string) string {
 	if err != nil {
 		panic(err)
 	}
-
-	if len(p) != 8 {
-		re = "geen kenteken"
+	var resp string  //p is een parameter die is meegegeven in de url van de API req
+	if len(p) != 8 { //filter alles wat niet dezelfde lengte heeft als een kenteken er uit
+		resp = "geen kenteken"
 	}
 
 	db, err := sql.Open("mysql", configStruct.Database.Username+":"+configStruct.Database.Password+"@tcp("+configStruct.Host+")/csdb?tls=true")
-	if err != nil {
+	if err != nil { //open SQL verbinding met ww, naam en server uit conf bestand
 		fmt.Println(err)
 	}
 	defer db.Close()
-	rows, err := db.Query("SELECT * FROM `csdb`.`kenteken` WHERE KentekenID = " + p)
-	if err != nil {
-		re = "code 0"
+	rows, err := db.Query("SELECT * FROM `csdb`.`kenteken` WHERE KentekenID = \"" + p + "\"")
+	if err != nil { //de query die de database ontvangt met p als ingevoerd kenteken
+		resp = "code 0"
 	} else {
-		for rows.Next() {
+		for rows.Next() { // zet resultaat van de query in een struct
 			var result Result
 			err := rows.Scan(&result.KentekenResult)
 			if err != nil {
-				re = "code 0"
+				resp = "code 1"
 			}
-			re = result.KentekenResult
+			resp = result.KentekenResult
 		}
 	}
-	return re
+	return resp // returned een string met het kenteken of foutcode
 
 }
 
 func input() {
-	app := fiber.New()
+	app := fiber.New() //api server
 
 	app.Get("api/:id", func(c *fiber.Ctx) error {
 		param := c.Params("id")
@@ -84,6 +76,11 @@ func input() {
 	})
 	log.Fatal(app.Listen(":3000"))
 }
+
+// var (
+// 	ceifers string = "0123456789"
+// 	letters string = "DFGHJKLNPRSTXYZ"
+// )
 
 // func kentekenGen() string {
 // 	rand.Seed(time.Now().Unix())
