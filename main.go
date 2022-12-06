@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"log"
+
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gofiber/fiber/v2"
 	"gopkg.in/yaml.v2"
 )
 
@@ -22,15 +25,17 @@ type Config struct {
 	} `yaml:"database"`
 }
 
-type result struct {
+type Result struct {
 	KentekenResult string
 }
 
 func main() {
-	databaseFunc()
+	input()
+	//databaseFunc()
 }
 
-func databaseFunc() {
+func databaseFunc(p string) string {
+	var re string
 	file, err := ioutil.ReadFile("config.yaml")
 
 	if err != nil {
@@ -43,25 +48,41 @@ func databaseFunc() {
 		panic(err)
 	}
 
+	if len(p) != 8 {
+		re = "geen kenteken"
+	}
+
 	db, err := sql.Open("mysql", configStruct.Database.Username+":"+configStruct.Database.Password+"@tcp("+configStruct.Host+")/csdb?tls=true")
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer db.Close()
-	rows, err := db.Query("SELECT * FROM `csdb`.`kenteken` ORDER BY `KentekenID`")
+	rows, err := db.Query("SELECT * FROM `csdb`.`kenteken` WHERE KentekenID = " + p)
 	if err != nil {
-		fmt.Println(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var result result
-		err := rows.Scan(&result.KentekenResult)
-		if err != nil {
-			fmt.Println(err)
+		re = "code 0"
+	} else {
+		for rows.Next() {
+			var result Result
+			err := rows.Scan(&result.KentekenResult)
+			if err != nil {
+				re = "code 0"
+			}
+			re = result.KentekenResult
 		}
-		fmt.Println(result.KentekenResult[1])
 	}
+	return re
+
+}
+
+func input() {
+	app := fiber.New()
+
+	app.Get("api/:id", func(c *fiber.Ctx) error {
+		param := c.Params("id")
+		out := databaseFunc(param)
+		return c.SendString(out)
+	})
+	log.Fatal(app.Listen(":3000"))
 }
 
 // func kentekenGen() string {
