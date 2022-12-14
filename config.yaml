@@ -1,6 +1,6 @@
 # Database credentials
-host: "capitaselectadb.mysql.database.azure.com:3306"
+host: "park-db.mysql.database.azure.com:3306"
 
 database:
-  user: "Jasper"
-  pass: "p23hzbdjdsYm"
+  user: "FonteynDB"
+  pass: "x%2N9lN2wRYFSEr5g&"
