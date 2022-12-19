@@ -1,5 +1,5 @@
 # Database credentials
-host: "park-db.mysql.database.azure.com:3306"
+host: "park-intern-db01.mysql.database.azure.com:3306"
 
 database:
   user: "FonteynDB"
